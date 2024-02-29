@@ -1,6 +1,8 @@
 package lexer
 
 import (
+	"fmt"
+
 	"github.com/iZarrios/monkey-lang/token"
 )
 
@@ -87,6 +89,7 @@ func (l *Lexer) NextToken() token.Token {
 	if !flag {
 		l.readChar()
 	}
+	fmt.Println(tok)
 	return tok
 }
 
