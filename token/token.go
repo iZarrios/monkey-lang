@@ -1,14 +1,14 @@
 package token
 
-import "fmt"
+type TokenType string
 
 const (
 	ILLEGAL = "ILLEGAL"
 	EOF     = "EOF"
 
-	// Identifiers + Literals
-	IDENT = "IDENT"
-	INT   = "INT"
+	// Identifiers + literals
+	IDENT = "IDENT" // add, foobar, x, y, ...
+	INT   = "INT"   // 1343456
 
 	// Operators
 	ASSIGN   = "="
@@ -18,8 +18,9 @@ const (
 	ASTERISK = "*"
 	SLASH    = "/"
 
-	LT     = "<"
-	GT     = ">"
+	LT = "<"
+	GT = ">"
+
 	EQ     = "=="
 	NOT_EQ = "!="
 
@@ -35,14 +36,12 @@ const (
 	// Keywords
 	FUNCTION = "FUNCTION"
 	LET      = "LET"
-	IF       = "IF"
 	TRUE     = "TRUE"
 	FALSE    = "FALSE"
+	IF       = "IF"
 	ELSE     = "ELSE"
 	RETURN   = "RETURN"
 )
-
-type TokenType string
 
 type Token struct {
 	Type    TokenType
@@ -63,10 +62,5 @@ func LookupIdent(ident string) TokenType {
 	if tok, ok := keywords[ident]; ok {
 		return tok
 	}
-	// if not known then it is a variable
 	return IDENT
-}
-
-func (tok Token) String() string {
-	return fmt.Sprintf("TYPE: %-7v ===> VAL: '%-v'", tok.Type, tok.Literal)
 }
