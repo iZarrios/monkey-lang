@@ -44,6 +44,17 @@ func NewParser(l *lexer.Lexer) (*Parser, error) {
 		p.registerPrefix(token.BANG, p.parsePrefixIxrepssion)
 		p.registerPrefix(token.MINUS, p.parsePrefixIxrepssion)
 	}
+	{ // INFIX
+		p.infixParseFns = make(map[token.TokenType]infixParseFn)
+		p.registerInfix(token.PLUS, p.parseInfixExpression)
+		p.registerInfix(token.MINUS, p.parseInfixExpression)
+		p.registerInfix(token.SLASH, p.parseInfixExpression)
+		p.registerInfix(token.ASTERISK, p.parseInfixExpression)
+		p.registerInfix(token.EQ, p.parseInfixExpression)
+		p.registerInfix(token.NOT_EQ, p.parseInfixExpression)
+		p.registerInfix(token.LT, p.parseInfixExpression)
+		p.registerInfix(token.GT, p.parseInfixExpression)
+	}
 
 	return p, nil
 }
@@ -149,6 +160,17 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		return nil
 	}
 	leftExp := prefix()
+
+	for p.peekToken.Type != token.SEMICOLON && precedence < p.peekPrecedence() {
+		infix := p.infixParseFns[p.peekToken.Type]
+		if infix == nil {
+			return leftExp
+		}
+
+		p.nextToken()
+		leftExp = infix(leftExp)
+	}
+
 	return leftExp
 }
 
@@ -161,6 +183,20 @@ func (p *Parser) parsePrefixIxrepssion() ast.Expression {
 	p.nextToken()
 
 	expression.Right = p.parseExpression(PREFIX)
+
+	return expression
+}
+
+func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
+	expression := &ast.InfixExpression{
+		Token:    p.curToken,
+		Operator: p.curToken.Literal,
+		Left:     left,
+	}
+
+	precedence := p.curPrecedence()
+	p.nextToken()
+	expression.Right = p.parseExpression(precedence)
 
 	return expression
 }
