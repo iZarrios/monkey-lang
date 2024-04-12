@@ -278,10 +278,10 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	for p.curToken.Type != token.RBRACE && p.curToken.Type != token.EOF {
 		stmt := p.parseStatement()
 
-		//TODO: not needed?
-		if stmt != nil {
-			block.Statements = append(block.Statements, stmt)
-		}
+		// //TODO: not needed?
+		// if stmt != nil {
+		block.Statements = append(block.Statements, stmt)
+		// }
 		p.nextToken()
 	}
 	return block
