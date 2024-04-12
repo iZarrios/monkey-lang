@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/iZarrios/monkey-lang/ast"
 	"github.com/iZarrios/monkey-lang/token"
@@ -79,4 +80,35 @@ func (p *Parser) curPrecedence() int {
 		return p
 	}
 	return LOWEST
+}
+
+func (p *Parser) parseIdentifier() ast.Expression {
+	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+}
+
+func (p *Parser) parseIntegerLiteral() ast.Expression {
+	defer untrace(trace("parseIntegerLiteral"))
+	literal := &ast.IntegerLiteral{Token: p.curToken}
+
+	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
+	if err != nil {
+		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+
+	literal.Value = value
+
+	return literal
+}
+
+func (p *Parser) parseBoolean() ast.Expression {
+	defer untrace(trace("parseBoolean"))
+
+	booleanExpression := &ast.Boolean{
+		Token: p.curToken,
+		Value: p.curToken.Type == token.TRUE,
+	}
+
+	return booleanExpression
 }
