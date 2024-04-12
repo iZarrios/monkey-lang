@@ -57,6 +57,7 @@ func NewParser(l *lexer.Lexer) (*Parser, error) {
 		p.registerInfix(token.NOT_EQ, p.parseInfixExpression)
 		p.registerInfix(token.LT, p.parseInfixExpression)
 		p.registerInfix(token.GT, p.parseInfixExpression)
+		p.registerInfix(token.LPAREN, p.parseCallExpression)
 	}
 
 	return p, nil
@@ -312,4 +313,44 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 	}
 
 	return idents
+}
+
+// `function` is the left operand
+func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	callExpr := &ast.CallExpression{
+		Token:    p.curToken,
+		Function: function,
+	}
+
+	callExpr.Arguments = p.parseCallArguments()
+
+	return callExpr
+}
+
+func (p *Parser) parseCallArguments() []ast.Expression {
+	args := []ast.Expression{}
+
+	// Handle case where there are no args
+	if p.peekToken.Type == token.RPAREN {
+		p.nextToken()
+		return args
+	}
+
+	p.nextToken()
+	args = append(args, p.parseExpression(LOWEST))
+
+	for p.peekToken.Type == token.COMMA {
+		// make current = comma
+		p.nextToken()
+		// make curr = arg
+		p.nextToken()
+
+		args = append(args, p.parseExpression(LOWEST))
+	}
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	return args
 }
