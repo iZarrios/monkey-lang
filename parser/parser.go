@@ -2,8 +2,6 @@ package parser
 
 import (
 	"errors"
-	"fmt"
-	"strconv"
 
 	"github.com/iZarrios/monkey-lang/ast"
 	"github.com/iZarrios/monkey-lang/lexer"
