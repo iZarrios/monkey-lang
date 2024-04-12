@@ -46,6 +46,7 @@ func NewParser(l *lexer.Lexer) (*Parser, error) {
 		p.registerPrefix(token.FALSE, p.parseBoolean)
 		p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 		p.registerPrefix(token.IF, p.parseIfExpression)
+		p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
 	}
 
 	{ // INFIX
@@ -285,4 +286,62 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 		p.nextToken()
 	}
 	return block
+}
+
+func (p *Parser) parseFunctionLiteral() ast.Expression {
+	fnLiteral := &ast.FunctionLiteral{Token: p.curToken}
+
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+
+	fnLiteral.Parameters = p.parseFunctionParameters()
+
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+
+	fnLiteral.Body = p.parseBlockStatement()
+
+	return fnLiteral
+}
+
+func (p *Parser) parseFunctionParameters() []*ast.Identifier {
+
+	idents := []*ast.Identifier{}
+
+	// if there are no params
+	if p.peekToken.Type == token.RPAREN {
+		p.nextToken()
+		return idents
+	}
+
+	// we have params in the current function literal
+	p.nextToken()
+
+	// get first param
+	ident := &ast.Identifier{
+		Token: p.curToken,
+		Value: p.curToken.Literal,
+	}
+	idents = append(idents, ident)
+
+	for p.peekToken.Type == token.COMMA {
+		// make current = comma
+		p.nextToken()
+		// make current = ident
+		p.nextToken()
+		ident := &ast.Identifier{
+			Token: p.curToken,
+			Value: p.curToken.Literal,
+		}
+		idents = append(idents, ident)
+	}
+
+	if !p.expectPeek(token.RPAREN) {
+		// no closing ')'
+		return nil
+	}
+
+	return idents
 }
