@@ -28,8 +28,8 @@ func Start(r io.Reader, w io.Writer) {
 			if tok.Type == token.ILLEGAL {
 				fmt.Fprintln(w, "Error while lexing")
 				break
-				// } else {
-				// 	fmt.Fprintf(w, "%+v\n", tok)
+			} else {
+				fmt.Fprintf(w, "%+v\n", tok)
 			}
 		}
 	}
