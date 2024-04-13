@@ -5,62 +5,58 @@ import (
 	"github.com/iZarrios/monkey-lang/object"
 )
 
-func Eval(node ast.Node) object.Object {
+func Eval(node ast.Node, env *object.Environment) object.Object {
 	switch node := node.(type) {
 	// Statements
 	case *ast.Program:
-		return evalProgram(node)
+		return evalProgram(node, env)
 	case *ast.ExpressionStatement:
-		return Eval(node.Expression)
+		return Eval(node.Expression, env)
 	// Expressions
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
 	case *ast.PrefixExpression:
-		right := Eval(node.Right)
+		right := Eval(node.Right, env)
 		if isError(right) {
 			return right
 		}
 
 		return evalPrefixExpression(node.Operator, right)
 	case *ast.InfixExpression:
-		left := Eval(node.Left)
+		left := Eval(node.Left, env)
 		if isError(left) {
 			return left
 		}
 
-		right := Eval(node.Right)
+		right := Eval(node.Right, env)
 		if isError(right) {
 			return right
 		}
 
 		return evalInfixExpression(node.Operator, left, right)
 	case *ast.BlockStatement:
-		return evalBlockStatement(node)
+		return evalBlockStatement(node, env)
 	case *ast.IfExpression:
-		return evalIfExpression(node)
+		return evalIfExpression(node, env)
 	case *ast.ReturnStatement:
-		val := Eval(node.ReturnValue)
+		val := Eval(node.ReturnValue, env)
 		if isError(val) {
 			return val
 		}
 
 		return &object.ReturnValue{Value: val}
+	case *ast.LetStatement:
+		val := Eval(node.Value, env)
+		if isError(val) {
+			return val
+		}
+		env.Set(node.Name.Value, val)
+	case *ast.Identifier:
+		return evalIdentifier(node, env)
 	}
 	return nil
-}
-
-func evalStatements(stmts []ast.Statement) object.Object {
-	var result object.Object
-	for _, statement := range stmts {
-		result = Eval(statement)
-
-		if returnValue, ok := result.(*object.ReturnValue); ok {
-			return returnValue.Value
-		}
-	}
-	return result
 }
 
 func evalPrefixExpression(op string, right object.Object) object.Object {
@@ -92,7 +88,7 @@ func evalMinusOpExpression(right object.Object) object.Object {
 		return newError("unknown operator: -%s", right.Type())
 	}
 
-	//TODO: instead of allocating a new object, we just return the one given to us, as we are sure of the type
+	//FIXME: instead of allocating a new object, we just return the one given to us, as we are sure of the type
 	value := right.(*object.Integer).Value
 
 	return &object.Integer{Value: -value}
@@ -150,26 +146,26 @@ func isTruthy(obj object.Object) bool {
 	}
 }
 
-func evalIfExpression(ie *ast.IfExpression) object.Object {
-	condition := Eval(ie.Condition)
+func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Object {
+	condition := Eval(ie.Condition, env)
 	if isError(condition) {
 		return condition
 	}
 
 	if isTruthy(condition) {
-		return Eval(ie.Consequence)
+		return Eval(ie.Consequence, env)
 	} else if ie.Alternative != nil {
 		// if Else branch exists
-		return Eval(ie.Alternative)
+		return Eval(ie.Alternative, env)
 	} else {
 		return NULL
 	}
 }
 
-func evalProgram(program *ast.Program) object.Object {
+func evalProgram(program *ast.Program, env *object.Environment) object.Object {
 	var result object.Object
 	for _, statement := range program.Statements {
-		result = Eval(statement)
+		result = Eval(statement, env)
 		switch result := result.(type) {
 		case *object.ReturnValue:
 			return result.Value
@@ -180,10 +176,10 @@ func evalProgram(program *ast.Program) object.Object {
 	return result
 }
 
-func evalBlockStatement(block *ast.BlockStatement) object.Object {
+func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) object.Object {
 	var result object.Object
 	for _, statement := range block.Statements {
-		result = Eval(statement)
+		result = Eval(statement, env)
 		if result != nil {
 			rt := result.Type()
 			if rt == object.RETURN_VALUE_OBJ || rt == object.ERROR_OBJ {
@@ -192,4 +188,13 @@ func evalBlockStatement(block *ast.BlockStatement) object.Object {
 		}
 	}
 	return result
+}
+
+func evalIdentifier(ident *ast.Identifier, env *object.Environment) object.Object {
+	val, ok := env.Get(ident.Value)
+	if !ok {
+		return newError("identifier not found: " + ident.Value)
+	}
+
+	return val
 }

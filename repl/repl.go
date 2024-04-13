@@ -7,6 +7,7 @@ import (
 
 	"github.com/iZarrios/monkey-lang/evaluator"
 	"github.com/iZarrios/monkey-lang/lexer"
+	"github.com/iZarrios/monkey-lang/object"
 	"github.com/iZarrios/monkey-lang/parser"
 )
 
@@ -26,6 +27,7 @@ func Start(in io.Reader, out io.Writer) {
 
 		l := lexer.NewLexer(line)
 		p, _ := parser.NewParser(l)
+		env := object.NewEnvironment()
 
 		program := p.ParseProgram()
 
@@ -35,7 +37,7 @@ func Start(in io.Reader, out io.Writer) {
 		}
 
 		// We have parsed the whole program now and we have found no errors in it
-		evaluated := evaluator.Eval(program)
+		evaluated := evaluator.Eval(program, env)
 		if evaluated != nil {
 			io.WriteString(out, evaluated.Inspect())
 			io.WriteString(out, "\n")
