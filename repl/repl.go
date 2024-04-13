@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/iZarrios/monkey-lang/evaluator"
 	"github.com/iZarrios/monkey-lang/lexer"
 	"github.com/iZarrios/monkey-lang/parser"
 )
@@ -32,8 +33,15 @@ func Start(in io.Reader, out io.Writer) {
 			printParserErrors(out, p.Errors())
 			continue
 		}
-		io.WriteString(out, program.String())
-		io.WriteString(out, "\n")
+
+		// We have parsed the whole program now and we have found no errors in it
+		evaluated := evaluator.Eval(program)
+		if evaluated != nil {
+			io.WriteString(out, evaluated.Inspect())
+			io.WriteString(out, "\n")
+		} else {
+			fmt.Println("got nil XD")
+		}
 	}
 }
 
