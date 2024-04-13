@@ -46,6 +46,7 @@ func NewParser(l *lexer.Lexer) (*Parser, error) {
 		p.registerPrefix(token.IF, p.parseIfExpression)
 		p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
 		p.registerPrefix(token.STRING, p.parseStringLiteral)
+		p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
 	}
 
 	{ // INFIX
@@ -322,38 +323,40 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 		Function: function,
 	}
 
-	callExpr.Arguments = p.parseCallArguments()
+	callExpr.Arguments = p.parseExpressionList(token.RPAREN)
 
 	return callExpr
 }
 
-func (p *Parser) parseCallArguments() []ast.Expression {
-	args := []ast.Expression{}
-
-	// Handle case where there are no args
-	if p.peekToken.Type == token.RPAREN {
-		p.nextToken()
-		return args
-	}
-
-	p.nextToken()
-	args = append(args, p.parseExpression(LOWEST))
-
-	for p.peekToken.Type == token.COMMA {
-		// make current = comma
-		p.nextToken()
-		// make curr = arg
-		p.nextToken()
-
-		args = append(args, p.parseExpression(LOWEST))
-	}
-
-	if !p.expectPeek(token.RPAREN) {
-		return nil
-	}
-
-	return args
-}
 func (p *Parser) parseStringLiteral() ast.Expression {
 	return &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal}
+}
+
+func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
+	list := []ast.Expression{}
+
+	if p.peekToken.Type == end {
+		p.nextToken()
+		return list
+	}
+	p.nextToken()
+	list = append(list, p.parseExpression(LOWEST))
+
+	for p.peekToken.Type == token.COMMA {
+		p.nextToken()
+		p.nextToken()
+		list = append(list, p.parseExpression(LOWEST))
+	}
+	if !p.expectPeek(end) {
+		return nil
+	}
+	return list
+}
+
+func (p *Parser) parseArrayLiteral() ast.Expression {
+	arr := &ast.ArrayLiteral{Token: p.curToken}
+
+	arr.Elements = p.parseExpressionList(token.RBRACKET)
+
+	return arr
 }
