@@ -17,6 +17,8 @@ const (
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
+	env := object.NewEnvironment()
+
 	for {
 		fmt.Fprint(out, PROMPT)
 		scanned := scanner.Scan()
@@ -27,7 +29,6 @@ func Start(in io.Reader, out io.Writer) {
 
 		l := lexer.NewLexer(line)
 		p, _ := parser.NewParser(l)
-		env := object.NewEnvironment()
 
 		program := p.ParseProgram()
 
@@ -41,8 +42,6 @@ func Start(in io.Reader, out io.Writer) {
 		if evaluated != nil {
 			io.WriteString(out, evaluated.Inspect())
 			io.WriteString(out, "\n")
-		} else {
-			fmt.Println("got nil XD")
 		}
 	}
 }
