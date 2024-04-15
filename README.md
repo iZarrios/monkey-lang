@@ -1,5 +1,5 @@
 ### What is this?
-This is my follow through of [Writing an Interpreter in Go](https://interpreterbook.com/)
+This is my follow through of [Writing an Interpreter in Go](https://interpreterbook.com/).
 
 I have always wanted to know how does one implement a programming language from scratch and this book did exactly that. It was a great read overall.
 
