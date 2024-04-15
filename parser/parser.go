@@ -60,6 +60,7 @@ func NewParser(l *lexer.Lexer) (*Parser, error) {
 		p.registerInfix(token.LT, p.parseInfixExpression)
 		p.registerInfix(token.GT, p.parseInfixExpression)
 		p.registerInfix(token.LPAREN, p.parseCallExpression)
+		p.registerInfix(token.LBRACKET, p.parseIndexExpression)
 	}
 
 	return p, nil
@@ -359,4 +360,20 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 	arr.Elements = p.parseExpressionList(token.RBRACKET)
 
 	return arr
+}
+
+func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
+	exp := &ast.IndexExpression{Token: p.curToken}
+
+	exp.Left = left
+
+	p.nextToken()
+
+	exp.Index = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.RBRACKET) {
+		return nil
+	}
+
+	return exp
 }
